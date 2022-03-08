@@ -71,14 +71,16 @@ class Remote_Request(models.Model):
     ]
 
     status = models.CharField(max_length=1,choices=STATUS_CHOICES,default=PENDING)
-
     reject_reason = models.TextField(null=True, blank=True)
 
 
 class Desk_Request(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False, db_column='user_id')
-    office = models.ForeignKey('Office', on_delete=models.CASCADE)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False, 
+                                db_column='user_id')
+    # replace with office name?
+    office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, 
+                                  db_column='office_id')
     request_reason = models.TextField(null=False, blank=False)
 
 
@@ -93,7 +95,6 @@ class Desk_Request(models.Model):
     ]
 
     status = models.CharField(max_length=1,choices=STATUS_CHOICES,default=PENDING)
-
     reject_reason = models.TextField(null=True, blank=True)
 
 
@@ -103,37 +104,31 @@ class Building(models.Model):
     floors_count = models.PositiveIntegerField(null=False, blank=False)
     building_address = models.CharField(max_length=200, null=False, blank=False)
 
-    # list of office id's that are in this building
-    office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=True, blank=True, db_column='office_id')
-
 
 class Office(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
     name = models.CharField(max_length=200, null=False, blank=False)
-    office_address = models.CharField(max_length=200, null=False, blank=False)
-    building_id = models.ForeignKey('Building', on_delete=models.CASCADE, null=False, blank=False, db_column='building_id')
+    building_id = models.ForeignKey('Building', on_delete=models.CASCADE, null=False, blank=False, 
+                                    db_column='building_id')
     floor_number = models.PositiveIntegerField(null=False, blank=False)
+    total_desks = models.PositiveIntegerField(null=False, blank=False, default=0)
+    usable_desks = models.PositiveIntegerField(null=False, blank=False, default=0)
     
 
-    office_admin = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='office_admin', db_column='office_admin_id')
-    user_id = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='user', db_column='user_id')
-
-    # list of all the desks in this office
-    desk_id = models.ForeignKey('Desk', on_delete=models.CASCADE, null=True, blank=True, db_column='desk_id')
-
-    # list of images id's related to this office
-    img_id = models.ForeignKey('Image', on_delete=models.SET_NULL, null=True, blank=True, db_column='img_id')
+    office_admin_id = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, 
+                                           db_column='office_admin_id')
 
 
 class Desk(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
     desk_number = models.PositiveIntegerField(null=False, blank=False)
-    office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, db_column='office_id')
-    user_id = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='assigned_employee', db_column='employee_id')
+    office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, 
+                                  db_column='office_id')
     is_usable = models.BooleanField(default=True)
 
 
 class Image(models.Model):
     id = models.BigAutoField(primary_key=True, db_column='id')
-    office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, db_column='office_id')
-    image_url = models.CharField(max_length=200, null=False, blank=False)
+    office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, 
+                                  db_column='office_id')
+    img_url = models.CharField(max_length=200, null=False, blank=False)
