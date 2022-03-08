@@ -1,10 +1,47 @@
 from django.db import models
-from django.contrib.auth.models import AbstractBaseUser
-from django.core.validators import MaxValueValidator
-from django.core.validators import MinValueValidator
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.core.validators import MinValueValidator, MaxValueValidator
 
 
-class User(AbstractBaseUser):
+class CustomUserManager(BaseUserManager):
+    
+    def create_user(self, email, first_name, last_name, password, **extra_fields):
+        if not email:
+            raise ValueError('Users must have an email address')
+        if not first_name:
+            raise ValueError('Users must have a first name')
+        if not last_name:
+            raise ValueError('Users must have a last name')
+        
+        user = self.model(
+            email=self.normalize_email(email),
+            first_name=first_name,
+            last_name=last_name,
+            **extra_fields
+        )
+        
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+
+    def create_superuser(self, email, first_name, last_name, password, **extra_fields):
+
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+        extra_fields.setdefault('is_active', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError('Superuser must have is_staff=True.')
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError('Superuser must have is_superuser=True.')
+
+        user = self.create_user(email, first_name, last_name, password, **extra_fields)
+        user.save(using=self._db)
+        return user
+
+
+class User(AbstractBaseUser, PermissionsMixin):
     id = models.BigAutoField(primary_key=True, db_column='id')
     first_name = models.CharField(max_length=200, null=False, blank=False)
     last_name = models.CharField(max_length=200, null=False, blank=False)
@@ -42,11 +79,14 @@ class User(AbstractBaseUser):
                                               MaxValueValidator(100),
                                               MinValueValidator(0)
                                           ])
-    is_deactivated = models.BooleanField(default=False)
-
+    is_active = models.BooleanField(default=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name', 'password', 'role']
+    objects = CustomUserManager()
+
+    def __str__(self):
+        return self.email
 
 
 class Remote_Request(models.Model):
