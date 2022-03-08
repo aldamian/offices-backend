@@ -1,20 +1,21 @@
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.contrib.auth.models import AbstractBaseUser
+from django.core.validators import MaxValueValidator
+from django.core.validators import MinValueValidator
 
 
-class Users(models.Model):
-    id = models.BigAutoField(primary_key=True)
+class User(AbstractBaseUser):
+    id = models.BigAutoField(primary_key=True, db_column='id')
     first_name = models.CharField(max_length=200, null=False, blank=False)
     last_name = models.CharField(max_length=200, null=False, blank=False)
-    email = models.EmailField(max_length=200, null=False, blank=False)
+    email = models.EmailField(max_length=200, null=False, blank=False, unique=True)
     password = models.CharField(max_length=200, null=False, blank=False)
-    desk = models.OneToOneField('Desks', on_delete=models.SET_NULL, null=True, blank=True)
-
+    desk_id = models.OneToOneField('Desk', on_delete=models.SET_NULL, null=True, blank=True, db_column='desk_id')
+    
 
     ADMIN = 'Admin'
     OFFICE_ADMIN = 'Office Admin'
     EMPLOYEE = 'Employee'
-
     USER_TYPE_CHOICES = [
         (ADMIN, 'Admin'),
         (OFFICE_ADMIN, 'Office Admin'),
@@ -23,11 +24,9 @@ class Users(models.Model):
 
     role = models.CharField(max_length=200, choices=USER_TYPE_CHOICES, default=EMPLOYEE)
 
-
     MALE = 'M'
     FEMALE = 'F'
     OTHER = 'O'
-
     GENDER_CHOICES = [
         (MALE, 'Male'),
         (FEMALE, 'Female'),
@@ -35,7 +34,6 @@ class Users(models.Model):
     ]
 
     gender = models.CharField(max_length=1,choices=GENDER_CHOICES)
-
 
     birth_date = models.DateField(null=True, blank=True)
     nationality = models.CharField(max_length=200, null=True, blank=True)
@@ -47,9 +45,13 @@ class Users(models.Model):
     is_deactivated = models.BooleanField(default=False)
 
 
-class Remote_Requests(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    employee = models.ForeignKey(Users, on_delete=models.CASCADE, null=True, blank=True)
+    USERNAME_FIELD = 'email'
+    REQUIRED_FIELDS = ['first_name', 'last_name', 'password', 'role']
+
+
+class Remote_Request(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='id')
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, db_column='user_id')
     remote_percentage = models.FloatField(default=0,
                                           validators=[
                                               MaxValueValidator(100),
@@ -73,10 +75,10 @@ class Remote_Requests(models.Model):
     reject_reason = models.TextField(null=True, blank=True)
 
 
-class Desk_Requests(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    employee = models.ForeignKey(Users, on_delete=models.CASCADE)
-    office = models.ForeignKey('Offices', on_delete=models.CASCADE)
+class Desk_Request(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='id')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False, db_column='user_id')
+    office = models.ForeignKey('Office', on_delete=models.CASCADE)
     request_reason = models.TextField(null=False, blank=False)
 
 
@@ -95,47 +97,43 @@ class Desk_Requests(models.Model):
     reject_reason = models.TextField(null=True, blank=True)
 
 
-class Buildings(models.Model):
-    id = models.BigAutoField(primary_key=True)
+class Building(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='id')
     name = models.CharField(max_length=200, null=False, blank=False)
     floors_count = models.PositiveIntegerField(null=False, blank=False)
     building_address = models.CharField(max_length=200, null=False, blank=False)
 
     # list of office id's that are in this building
-    office = models.ForeignKey('Offices', on_delete=models.CASCADE, null=True, blank=True)
+    office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=True, blank=True, db_column='office_id')
 
 
-class Offices(models.Model):
-    id = models.BigAutoField(primary_key=True)
+class Office(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='id')
     name = models.CharField(max_length=200, null=False, blank=False)
     office_address = models.CharField(max_length=200, null=False, blank=False)
-    building = models.ForeignKey('Buildings', on_delete=models.CASCADE, null=False, blank=False)
+    building_id = models.ForeignKey('Building', on_delete=models.CASCADE, null=False, blank=False, db_column='building_id')
     floor_number = models.PositiveIntegerField(null=False, blank=False)
     
-    width_meters = models.FloatField(null=False, blank=False)
-    length_meters = models.FloatField(null=False, blank=False)
 
-    office_admin = models.OneToOneField(Users, on_delete=models.SET_NULL, null=True, blank=True, related_name='office_admin')
-    user = models.ForeignKey(Users, on_delete=models.SET_NULL, null=True, blank=True, related_name='users')
+    office_admin = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='office_admin', db_column='office_admin_id')
+    user_id = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='user', db_column='user_id')
 
     # list of all the desks in this office
-    desk = models.ForeignKey('Desks', on_delete=models.CASCADE, null=True, blank=True)
+    desk_id = models.ForeignKey('Desk', on_delete=models.CASCADE, null=True, blank=True, db_column='desk_id')
 
     # list of images id's related to this office
-    office_images = models.ForeignKey('Images', on_delete=models.SET_NULL, null=True, blank=True)
+    img_id = models.ForeignKey('Image', on_delete=models.SET_NULL, null=True, blank=True, db_column='img_id')
 
 
-class Desks(models.Model):
-    id = models.BigAutoField(primary_key=True)
+class Desk(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='id')
     desk_number = models.PositiveIntegerField(null=False, blank=False)
-    office = models.ForeignKey('Offices', on_delete=models.CASCADE)
-    assigned_employee = models.OneToOneField(Users, on_delete=models.CASCADE, null=True, blank=True)
+    office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, db_column='office_id')
+    user_id = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True, related_name='assigned_employee', db_column='employee_id')
     is_usable = models.BooleanField(default=True)
-    width_cm = models.PositiveIntegerField(null=False, blank=False)
-    height_cm = models.PositiveIntegerField(null=False, blank=False)
 
 
-class Images(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    office = models.ForeignKey('Offices', on_delete=models.CASCADE)
+class Image(models.Model):
+    id = models.BigAutoField(primary_key=True, db_column='id')
+    office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, db_column='office_id')
     image_url = models.CharField(max_length=200, null=False, blank=False)
