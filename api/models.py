@@ -1,34 +1,42 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.core.validators import MinValueValidator, MaxValueValidator
+from django.contrib.auth.hashers import make_password
+from django.utils.translation import gettext_lazy as _
 
+
+
+"""
+Need to store password as hash, this can be done through the custom user manager after I implement it.
+"""
 
 class CustomUserManager(BaseUserManager):
     
-    def create_user(self, email, password, role, first_name, last_name, **other_fields):
+    def create_user(self, email, password, role, first_name, last_name, 
+                    desk_id, gender, birth_date, nationality, remote_percentage,
+                    **other_fields):
 
         if not email:
-            raise ValueError('Users must have an email address.')
+            raise ValueError(_('Users must have an email address.'))
+        if not password:
+            raise ValueError(_('Users must have a password.'))
+        if not role:
+            raise ValueError(_('Users must have Employee, Admin or Office Admin role.'))
         if not first_name:
-            raise ValueError('Users must have a first name.')
+            raise ValueError(_('Users must have a first name.'))
         if not last_name:
-            raise ValueError('Users must have a last name.')
-
-        other_fields.setdefault('desk_id', None)
-        other_fields.setdefault('gender', None)
-        other_fields.setdefault('birth_date', None)
-        other_fields.setdefault('nationality', None)
-        other_fields.setdefault('remote_percentage', 0)
-
-        other_fields.setdefault('is_staff', False)
-        other_fields.setdefault('is_superuser', False)
-        other_fields.setdefault('is_active', True)
-        
+            raise ValueError(_('Users must have a last name.'))
+  
         user = self.model(
             email=self.normalize_email(email),
             role=role,
             first_name=first_name,
             last_name=last_name,
+            desk_id=int(desk_id),
+            gender=gender,
+            birth_date=birth_date,
+            nationality=nationality, 
+            remote_percentage=remote_percentage,
             **other_fields
         )
         
@@ -41,50 +49,25 @@ class CustomUserManager(BaseUserManager):
                          desk_id, gender, birth_date, nationality, remote_percentage,
                          **other_fields):
 
-        if not email:
-            raise ValueError('Superuser must have an email address.')
-        if not role:
-            raise ValueError('Superuser must have Admin or Office Admin role.')
-        if not first_name:
-            raise ValueError('Superuser must have a first name.')
-        if not last_name:
-            raise ValueError('Superuser must have a last name.')
-
         other_fields.setdefault('is_staff', True)
         other_fields.setdefault('is_superuser', True)
         other_fields.setdefault('is_active', True)
 
         if other_fields.get('is_staff') is not True:
-            raise ValueError('Superuser must have is_staff=True.')
+            raise ValueError(_('Superuser must have is_staff=True.'))
         if other_fields.get('is_superuser') is not True:
-            raise ValueError('Superuser must have is_superuser=True.')
+            raise ValueError(_('Superuser must have is_superuser=True.'))
 
-        user = self.model(
-            email=self.normalize_email(email),
-            role=role,
-            first_name=first_name,
-            last_name=last_name,
-            desk_id=desk_id,
-            gender=gender,
-            birth_date=birth_date,
-            nationality=nationality,
-            remote_percentage=remote_percentage
-        )
-
-        user.set_password(password)
         
-
-
-        return user
-
-    
-    # return only active users
-    class UserObjects(models.Manager):
-        def get_queryset(self):
-            return super().get_queryset().filter(is_active=True)
+        return self.create_user(email, password, role, first_name, last_name, desk_id, 
+                                gender, birth_date, nationality, remote_percentage, **other_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
+
+    class UserObjects(models.Manager):
+        def get_queryset(self):
+            return super().get_queryset().filter(is_active=True)
 
 
     ADMIN = 'Admin'
@@ -94,6 +77,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     MALE = 'M'
     FEMALE = 'F'
     OTHER = 'O'
+    NONE = 'N'
 
     USER_TYPE_CHOICES = [
         (ADMIN, 'Admin'),
@@ -104,15 +88,16 @@ class User(AbstractBaseUser, PermissionsMixin):
     GENDER_CHOICES = [
         (MALE, 'Male'),
         (FEMALE, 'Female'),
-        (OTHER, 'Other')
+        (OTHER, 'Other'),
+        (NONE, 'None')
     ]
     
     email = models.EmailField(max_length=200, null=False, blank=False, unique=True)
+    password = models.CharField(max_length=200, null=False, blank=False)
     first_name = models.CharField(max_length=200, null=False, blank=False)
     last_name = models.CharField(max_length=200, null=False, blank=False)
-    password = models.CharField(max_length=200, null=False, blank=False)
     role = models.CharField(max_length=200, choices=USER_TYPE_CHOICES, default=EMPLOYEE)
-    desk_id = models.OneToOneField('Desk', on_delete=models.SET_NULL, null=True, blank=True, 
+    desk_id = models.OneToOneField('Desk', on_delete=models.SET_NULL, null=True, blank=True, default=None,
                                     db_column='desk_id')
     gender = models.CharField(max_length=1,choices=GENDER_CHOICES)
     birth_date = models.DateField(null=True, blank=True)
@@ -127,9 +112,11 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_superuser = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
-    REQUIRED_FIELDS = ['first_name', 'last_name', 'password', 'role']
-    objects = CustomUserManager() # custom permission manager
+    REQUIRED_FIELDS = ['password', 'role', 'first_name', 'last_name', 'desk_id', 'gender', 'birth_date', 'nationality', 'remote_percentage']
 
+    objects = CustomUserManager() # custom permission manager
+    userObjects = UserObjects() # custom manager
+    
 
     class Meta:
         ordering = ('role',)
