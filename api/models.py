@@ -96,20 +96,20 @@ class User(AbstractBaseUser, PermissionsMixin):
     password = models.CharField(max_length=200, null=False, blank=False)
     first_name = models.CharField(max_length=200, null=False, blank=False)
     last_name = models.CharField(max_length=200, null=False, blank=False)
-    role = models.CharField(max_length=200, choices=USER_TYPE_CHOICES, default=EMPLOYEE)
+    role = models.CharField(max_length=200, choices=USER_TYPE_CHOICES, default=EMPLOYEE, null=False, blank=False)
     desk_id = models.OneToOneField('Desk', on_delete=models.SET_NULL, null=True, blank=True, default=None,
                                     db_column='desk_id')
-    gender = models.CharField(max_length=1,choices=GENDER_CHOICES)
+    gender = models.CharField(max_length=1,choices=GENDER_CHOICES, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    nationality = models.CharField(max_length=200, null=True, blank=True)
-    remote_percentage = models.FloatField(default=0,
+    nationality = models.CharField(max_length=200, blank=True)
+    remote_percentage = models.FloatField(default=0, null=False, blank=True,
                                           validators=[
                                               MaxValueValidator(100),
                                               MinValueValidator(0)
                                           ])
-    is_active = models.BooleanField(default=True) 
-    is_staff = models.BooleanField(default=False)
-    is_superuser = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=False, null=False, blank=False)
+    is_staff = models.BooleanField(default=False, null=False, blank=False)
+    is_superuser = models.BooleanField(default=False, null=False, blank=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['password', 'role', 'first_name', 'last_name', 'desk_id', 'gender', 'birth_date', 'nationality', 'remote_percentage']
@@ -137,24 +137,23 @@ class Remote_Request(models.Model):
         (REJECTED, 'Rejected')
     ]
 
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True, db_column='user_id')
-    remote_percentage = models.FloatField(default=0,
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False, db_column='user_id')
+    remote_percentage = models.FloatField(default=0, null=False, blank=False,
                                           validators=[
                                               MaxValueValidator(100),
                                               MinValueValidator(0)
                                           ])
     request_reason = models.TextField(null=False, blank=False)
-    status = models.CharField(max_length=1,choices=STATUS_CHOICES,default=PENDING)
-    reject_reason = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=1,choices=STATUS_CHOICES, default=PENDING, null=False, blank=False)
+    reject_reason = models.TextField(blank=True)
 
 
 class Desk_Request(models.Model):
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False, 
                                 db_column='user_id')
-    # replace with office name?
     office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, 
                                   db_column='office_id')
-    request_reason = models.TextField(null=False, blank=False)
+    request_reason = models.TextField(blank=False)
 
 
     PENDING = 'P'
@@ -167,8 +166,8 @@ class Desk_Request(models.Model):
         (REJECTED, 'Rejected')
     ]
 
-    status = models.CharField(max_length=1,choices=STATUS_CHOICES,default=PENDING)
-    reject_reason = models.TextField(null=True, blank=True)
+    status = models.CharField(max_length=1,choices=STATUS_CHOICES,default=PENDING, null=False, blank=True)
+    reject_reason = models.TextField(blank=True)
 
 
 class Building(models.Model):
@@ -197,7 +196,13 @@ class Desk(models.Model):
     is_usable = models.BooleanField(default=True)
 
 
-class Image(models.Model):
+class Office_Image(models.Model):
     office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, 
                                   db_column='office_id')
+    img_url = models.CharField(max_length=200, null=False, blank=False)
+
+
+class User_Image(models.Model):
+    user_id = models.OneToOneField(User, on_delete=models.CASCADE, null=False, blank=False, 
+                                db_column='user_id')
     img_url = models.CharField(max_length=200, null=False, blank=False)

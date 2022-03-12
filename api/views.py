@@ -28,7 +28,7 @@ class UserPostPermission(BasePermission):
 
 class UserList(generics.ListCreateAPIView):
     # permission_classes = [IsAdminUser]
-    queryset = User.userObjects.all()
+    queryset = User.objects.all()
     serializer_class = UserSerializer
 
 
