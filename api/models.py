@@ -3,12 +3,8 @@ from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseU
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.contrib.auth.hashers import make_password
 from django.utils.translation import gettext_lazy as _
+from django.conf import settings
 
-
-
-"""
-Need to store password as hash, this can be done through the custom user manager after I implement it.
-"""
 
 class CustomUserManager(BaseUserManager):
     
@@ -30,19 +26,33 @@ class CustomUserManager(BaseUserManager):
         user = self.model(
             email=self.normalize_email(email),
             role=role,
-            first_name=first_name,
-            last_name=last_name,
-            desk_id=int(desk_id),
+            first_name=first_name.capitalize(),
+            last_name=last_name.capitalize(),
+            desk_id=desk_id,
             gender=gender,
             birth_date=birth_date,
-            nationality=nationality, 
+            nationality=nationality.capitalize, 
             remote_percentage=remote_percentage,
             **other_fields
         )
         
-        user.set_password(password)
+        user.set_password(password) # takes care of the hashing
         user.save(using=self._db)
         return user
+
+    
+    def create_staffuser(self, email, password, role, first_name, last_name, 
+                         desk_id, gender, birth_date, nationality, remote_percentage,
+                         **other_fields):
+
+        other_fields.setdefault('is_staff', True)
+        other_fields.setdefault('is_superuser', False)
+        other_fields.setdefault('is_active', True)
+
+        if other_fields.get('is_staff') is not True:
+            raise ValueError(_('StaffUser must have is_staff=True.'))
+        if other_fields.get('is_superuser') is True:
+            raise ValueError(_('StaffUser must have is_superuser=False.'))
 
 
     def create_superuser(self, email, password, role, first_name, last_name, 
@@ -97,19 +107,19 @@ class User(AbstractBaseUser, PermissionsMixin):
     first_name = models.CharField(max_length=200, null=False, blank=False)
     last_name = models.CharField(max_length=200, null=False, blank=False)
     role = models.CharField(max_length=200, choices=USER_TYPE_CHOICES, default=EMPLOYEE, null=False, blank=False)
-    desk_id = models.OneToOneField('Desk', on_delete=models.SET_NULL, null=True, blank=True, default=None,
+    desk_id = models.OneToOneField('Desk', on_delete=models.SET_NULL, null=True, blank=True,
                                     db_column='desk_id')
     gender = models.CharField(max_length=1,choices=GENDER_CHOICES, blank=True)
     birth_date = models.DateField(null=True, blank=True)
-    nationality = models.CharField(max_length=200, blank=True)
+    nationality = models.CharField(max_length=200, blank=True, default='None')
     remote_percentage = models.FloatField(default=0, null=False, blank=True,
                                           validators=[
                                               MaxValueValidator(100),
                                               MinValueValidator(0)
                                           ])
-    is_active = models.BooleanField(default=False, null=False, blank=False)
-    is_staff = models.BooleanField(default=False, null=False, blank=False)
-    is_superuser = models.BooleanField(default=False, null=False, blank=False)
+    is_active = models.BooleanField(default=False, null=False)
+    is_staff = models.BooleanField(default=False, null=False)
+    is_superuser = models.BooleanField(default=False, null=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['password', 'role', 'first_name', 'last_name', 'desk_id', 'gender', 'birth_date', 'nationality', 'remote_percentage']
@@ -124,6 +134,53 @@ class User(AbstractBaseUser, PermissionsMixin):
     def __str__(self):
         return self.email
 
+    def get_full_name(self):
+        return self.first_name + ' ' + self.last_name
+
+    def get_short_name(self):
+        return self.first_name
+
+    def get_role(self):
+        return self.role
+    
+    def get_desk(self):
+        return self.desk_id
+
+    def get_gender(self):
+        return self.gender
+
+    def get_birth_date(self):
+        return self.birth_date
+
+    def get_nationality(self):
+        return self.nationality
+
+    def get_remote_percentage(self):
+        return self.remote_percentage
+
+    def has_perm(self, perm, obj=None):
+        "Does the user have specific permission?"
+        return True
+
+    def has_module_perms(self, app_label):
+        "Does the user have permissions to view the app `app_label`?"
+        return True
+
+    @property
+    def is_staff(self):
+        "Is the user a member of staff?"
+        return self.is_staff
+
+    @property
+    def is_superuser(self):
+        "Is the user an admin member?"
+        return self.is_superuser
+
+    @property
+    def is_active(self):
+        "Is the user active?"
+        return self.is_active
+
 
 class Remote_Request(models.Model):
 
@@ -137,7 +194,7 @@ class Remote_Request(models.Model):
         (REJECTED, 'Rejected')
     ]
 
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False, db_column='user_id')
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False, db_column='user_id', default=0)
     remote_percentage = models.FloatField(default=0, null=False, blank=False,
                                           validators=[
                                               MaxValueValidator(100),
@@ -145,11 +202,29 @@ class Remote_Request(models.Model):
                                           ])
     request_reason = models.TextField(null=False, blank=False)
     status = models.CharField(max_length=1,choices=STATUS_CHOICES, default=PENDING, null=False, blank=False)
-    reject_reason = models.TextField(blank=True)
+    reject_reason = models.TextField(blank=True, default='Request denied.')
+
+    def __str__(self):
+        return str(self.user_id)
+
+    def get_user_id(self):
+        return self.user_id
+    
+    def get_remote_percentage(self):
+        return self.remote_percentage
+
+    def get_request_reason(self):
+        return self.request_reason
+
+    def get_status(self):
+        return self.status
+
+    def get_reject_reason(self):
+        return self.reject_reason
 
 
 class Desk_Request(models.Model):
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=False, blank=False, 
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=False, blank=False, 
                                 db_column='user_id')
     office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, 
                                   db_column='office_id')
@@ -167,13 +242,37 @@ class Desk_Request(models.Model):
     ]
 
     status = models.CharField(max_length=1,choices=STATUS_CHOICES,default=PENDING, null=False, blank=True)
-    reject_reason = models.TextField(blank=True)
+    reject_reason = models.TextField(blank=True, default='Request denied.')
+
+    def __str__(self):
+        return str(self.user_id)
+
+    def get_office_id(self):
+        return self.office_id
+
+    def get_request_reason(self):
+        return self.request_reason
+
+    def get_status(self):
+        return self.status
+
+    def get_reject_reason(self):
+        return self.reject_reason
 
 
 class Building(models.Model):
     name = models.CharField(max_length=200, null=False, blank=False)
     floors_count = models.PositiveIntegerField(null=False, blank=False)
     building_address = models.CharField(max_length=200, null=False, blank=False)
+
+    def __str__(self):
+        return self.name
+
+    def get_floors_count(self):
+        return self.floors_count
+
+    def get_building_address(self):
+        return self.building_address
 
 
 class Office(models.Model):
@@ -188,6 +287,24 @@ class Office(models.Model):
     office_admin_id = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, 
                                            db_column='office_admin_id')
 
+    def __str__(self):
+        return self.name
+
+    def get_building_id(self):
+        return self.building_id
+
+    def get_floor_number(self):
+        return self.floor_number
+
+    def get_total_desks(self):
+        return self.total_desks
+
+    def get_usable_desks(self):
+        return self.usable_desks
+
+    def get_office_admin_id(self):
+        return self.office_admin_id
+
 
 class Desk(models.Model):
     desk_number = models.PositiveIntegerField(null=False, blank=False)
@@ -195,14 +312,35 @@ class Desk(models.Model):
                                   db_column='office_id')
     is_usable = models.BooleanField(default=True)
 
+    def __str__(self):
+        return str(self.desk_number)
+
+    def get_office_id(self):
+        return self.office_id
+
+    def get_is_usable(self):
+        return self.is_usable
+
 
 class Office_Image(models.Model):
     office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, 
                                   db_column='office_id')
     img_url = models.CharField(max_length=200, null=False, blank=False)
 
+    def __str__(self):
+        return str(self.office_id)
+
+    def get_img_url(self):
+        return self.img_url
+
 
 class User_Image(models.Model):
     user_id = models.OneToOneField(User, on_delete=models.CASCADE, null=False, blank=False, 
                                 db_column='user_id')
     img_url = models.CharField(max_length=200, null=False, blank=False)
+
+    def __str__(self):
+        return str(self.user_id)
+
+    def get_img_url(self):
+        return self.img_url

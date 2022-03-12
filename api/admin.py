@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import User, Remote_Request, Desk_Request, Building, Office, Desk, Image
+from .models import User, Remote_Request, Desk_Request, Building, Office, Desk, Office_Image, User_Image
 from django.forms import TextInput, Textarea
 from django.db import models
 
@@ -15,5 +15,6 @@ admin.site.register(Office)
 admin.site.register(Desk)
 admin.site.register(Remote_Request)
 admin.site.register(Desk_Request)
-admin.site.register(Image)
+admin.site.register(Office_Image)
+admin.site.register(User_Image)
 
