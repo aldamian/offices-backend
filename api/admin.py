@@ -6,8 +6,10 @@ from django.db import models
 
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
+    search_fields = ('email', 'role', 'first_name')
+    list_filter = ('email', 'first_name', 'role')
     list_display = ('email', 'role', 'first_name', 'last_name', 'desk_id', 
-                    'gender', 'birth_date', 'nationality', 'remote_percentage', 'is_superuser')
+                    'gender', 'birth_date', 'nationality', 'remote_percentage', 'is_superuser', 'is_active', 'is_staff')
     # prepopulated_fileds = {}
 
 admin.site.register(Building)

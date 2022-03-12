@@ -21,16 +21,26 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_('Users must have a first name.'))
         if not last_name:
             raise ValueError(_('Users must have a last name.'))
+        if nationality != None:
+            nationality=nationality.capitalize
+
+        try: 
+            int(desk_id) 
+            desk_id = Desk.objects.get(pk=desk_id)
+        except ValueError:
+            desk_id = None
+        except TypeError:
+            desk_id = None
 
         user = self.model(
             email=self.normalize_email(email),
-            role=role,
+            role=role.capitalize(),
             first_name=first_name.capitalize(),
             last_name=last_name.capitalize(),
-            desk_id=Desk.objects.get(pk=desk_id),
+            desk_id=desk_id,
             gender=gender,
             birth_date=birth_date,
-            nationality=nationality.capitalize(), 
+            nationality=nationality, 
             remote_percentage=remote_percentage,
             **other_fields
         )
@@ -82,24 +92,24 @@ class User(AbstractBaseUser, PermissionsMixin):
             return super().get_queryset().filter(is_active=True)
 
 
-    ADMIN = 'Admin'
-    OFFICE_ADMIN = 'Office Admin'
-    EMPLOYEE = 'Employee'
+    ADMIN = _('Admin')
+    OFFICE_ADMIN = _('Office Admin')
+    EMPLOYEE = _('Employee')
 
     MALE = 'M'
     FEMALE = 'F'
     OTHER = 'O'
 
     USER_TYPE_CHOICES = [
-        (ADMIN, 'Admin'),
-        (OFFICE_ADMIN, 'Office Admin'),
-        (EMPLOYEE, 'Employee'),
+        (ADMIN, _('Admin')),
+        (OFFICE_ADMIN, _('Office Admin')),
+        (EMPLOYEE, _('Employee')),
     ]
 
     GENDER_CHOICES = [
-        (MALE, 'Male'),
-        (FEMALE, 'Female'),
-        (OTHER, 'Other'),
+        (MALE, _('Male')),
+        (FEMALE, _('Female')),
+        (OTHER, _('Other')),
     ]
     
     email = models.EmailField(max_length=200, null=False, blank=False, unique=True)
@@ -109,7 +119,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     role = models.CharField(max_length=200, choices=USER_TYPE_CHOICES, default=EMPLOYEE, null=False, blank=False)
     desk_id = models.OneToOneField('Desk', on_delete=models.SET_NULL, null=True, blank=True,
                                     db_column='desk_id')
-    gender = models.CharField(max_length=1,choices=GENDER_CHOICES, blank=True)
+    gender = models.CharField(max_length=1, choices=GENDER_CHOICES, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     nationality = models.CharField(max_length=200, blank=True, default='None')
     remote_percentage = models.FloatField(default=0, null=False, blank=True,
