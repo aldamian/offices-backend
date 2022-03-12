@@ -116,7 +116,7 @@ AUTH_USER_MODEL = 'api.User'
 
 REST_FAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
+        'rest_framework.permissions.IsAuthenticated', 
     ]
 }
 

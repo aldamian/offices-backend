@@ -7,7 +7,7 @@ from django.db import models
 @admin.register(User)
 class UserAdmin(admin.ModelAdmin):
     list_display = ('email', 'role', 'first_name', 'last_name', 'desk_id', 
-                    'gender', 'birth_date', 'nationality', 'remote_percentage')
+                    'gender', 'birth_date', 'nationality', 'remote_percentage', 'is_superuser')
     # prepopulated_fileds = {}
 
 admin.site.register(Building)

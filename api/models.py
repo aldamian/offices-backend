@@ -1,7 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.core.validators import MinValueValidator, MaxValueValidator
-from django.contrib.auth.hashers import make_password
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
@@ -22,22 +21,22 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_('Users must have a first name.'))
         if not last_name:
             raise ValueError(_('Users must have a last name.'))
-  
+
         user = self.model(
             email=self.normalize_email(email),
             role=role,
             first_name=first_name.capitalize(),
             last_name=last_name.capitalize(),
-            desk_id=desk_id,
+            desk_id=Desk.objects.get(pk=desk_id),
             gender=gender,
             birth_date=birth_date,
-            nationality=nationality.capitalize, 
+            nationality=nationality.capitalize(), 
             remote_percentage=remote_percentage,
             **other_fields
         )
         
         user.set_password(password) # takes care of the hashing
-        user.save(using=self._db)
+        user.save()
         return user
 
     
@@ -53,6 +52,9 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_('StaffUser must have is_staff=True.'))
         if other_fields.get('is_superuser') is True:
             raise ValueError(_('StaffUser must have is_superuser=False.'))
+
+        return self.create_user(email, password, role, first_name, last_name, desk_id, 
+                                gender, birth_date, nationality, remote_percentage, **other_fields)
 
 
     def create_superuser(self, email, password, role, first_name, last_name, 
@@ -87,7 +89,6 @@ class User(AbstractBaseUser, PermissionsMixin):
     MALE = 'M'
     FEMALE = 'F'
     OTHER = 'O'
-    NONE = 'N'
 
     USER_TYPE_CHOICES = [
         (ADMIN, 'Admin'),
@@ -99,7 +100,6 @@ class User(AbstractBaseUser, PermissionsMixin):
         (MALE, 'Male'),
         (FEMALE, 'Female'),
         (OTHER, 'Other'),
-        (NONE, 'None')
     ]
     
     email = models.EmailField(max_length=200, null=False, blank=False, unique=True)
@@ -117,9 +117,9 @@ class User(AbstractBaseUser, PermissionsMixin):
                                               MaxValueValidator(100),
                                               MinValueValidator(0)
                                           ])
-    is_active = models.BooleanField(default=False, null=False)
-    is_staff = models.BooleanField(default=False, null=False)
-    is_superuser = models.BooleanField(default=False, null=False)
+
+    is_active = models.BooleanField(default=False)
+    is_staff = models.BooleanField(default=False)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['password', 'role', 'first_name', 'last_name', 'desk_id', 'gender', 'birth_date', 'nationality', 'remote_percentage']
@@ -157,29 +157,6 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_remote_percentage(self):
         return self.remote_percentage
-
-    def has_perm(self, perm, obj=None):
-        "Does the user have specific permission?"
-        return True
-
-    def has_module_perms(self, app_label):
-        "Does the user have permissions to view the app `app_label`?"
-        return True
-
-    @property
-    def is_staff(self):
-        "Is the user a member of staff?"
-        return self.is_staff
-
-    @property
-    def is_superuser(self):
-        "Is the user an admin member?"
-        return self.is_superuser
-
-    @property
-    def is_active(self):
-        "Is the user active?"
-        return self.is_active
 
 
 class Remote_Request(models.Model):
@@ -280,11 +257,11 @@ class Office(models.Model):
     building_id = models.ForeignKey('Building', on_delete=models.CASCADE, null=False, blank=False, 
                                     db_column='building_id')
     floor_number = models.PositiveIntegerField(null=False, blank=False)
-    total_desks = models.PositiveIntegerField(null=False, blank=False, default=0)
-    usable_desks = models.PositiveIntegerField(null=False, blank=False, default=0)
+    total_desks = models.PositiveIntegerField(null=False, blank=False)
+    usable_desks = models.PositiveIntegerField(null=False, blank=False)
     
 
-    office_admin_id = models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, 
+    office_admin= models.OneToOneField(User, on_delete=models.SET_NULL, null=True, blank=True, 
                                            db_column='office_admin_id')
 
     def __str__(self):
