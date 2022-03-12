@@ -1,0 +1,7 @@
+python manage.py makemigrations --dry-run --verbosity 3
+python manage.py runserver
+python manage.py migrate
+python manage.py createsuperuser
+
+coverage run --omit='*/venv*/ ,*/tests/*' manage.py test
+coverage html
