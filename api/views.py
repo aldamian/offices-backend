@@ -1,9 +1,9 @@
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework.decorators import api_view
 from .models import User# , CustomUserManager
-from .serializers import UserSerializer, MyTokenObtainPairSerializer
+from .serializers import UserUpdateSerializer, UserPostSerializer, UserUpdateSerializer, MyTokenObtainPairSerializer
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny
@@ -16,11 +16,6 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 # to-do: add proper permissions for each endpoint. Use obj.role to determine permissions
 
 
-@api_view(['GET'])
-def getData(request):
-    return Response({"message": "Hello, World!"})
-
-
 class UserPostPermission(BasePermission):
     message = 'You are not allowed to create users.'
 
@@ -28,17 +23,14 @@ class UserPostPermission(BasePermission):
 
         # need to handle anonymous users. 
         
-        if request.method in SAFE_METHODS:
-            return True
-
-        
-        
-        return request.user.role == 'Admin'
+        if request.user.is_anonymous:
+            return False
+        else:
+            return request.user.role == 'Admin'
 
 
 class UserList(viewsets.ModelViewSet):
-    permission_classes = [IsAdminUser]
-    serializer_class = UserSerializer
+    serializer_class = UserPostSerializer
     # queryset = User.objects.all()
 
     # Define custom queryset
