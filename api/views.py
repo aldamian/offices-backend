@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework.response import Response
 from rest_framework import generics
@@ -10,33 +11,127 @@ from rest_framework.permissions import AllowAny
 from rest_framework. permissions import SAFE_METHODS, BasePermission, IsAdminUser, DjangoModelPermissions
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
-
+from rest_framework_simplejwt.authentication import JWTAuthentication
+from django.forms.models import model_to_dict
+# import JsonResponse
+# 
 
 # These views are endpoints for the API
 # to-do: add proper permissions for each endpoint. Use obj.role to determine permissions
 
 
-class UserPostPermission(BasePermission):
+class getRoutesView(APIView):
+    permission_classes = [AllowAny]
+
+    routes = [
+        {'GET': '/swagger/', 'description': 'API Documentation'},
+        {'GET': '/admin/', 'description': 'Admin Dashboard'},
+        {'GET': '/api/users/'},
+        {'GET': '/api/users/<int:pk>/'},
+        {'GET': '/api/users/<int:pk>/requests/'},
+        {'GET': '/api/buildings/'},
+        {'GET': '/api/buildings/<int:pk>/'},
+        {'GET': '/api/offices/'},
+        {'GET': '/api/offices/<int:pk>/'},
+        {'GET': '/api/offices/<int:pk>/requests/'},
+        {'GET': '/api/offices/<int:pk>/requests/<int:pk>/'},
+        {'GET': '/api/offices/<int:pk>/requests/<int:pk>/approve/'},
+        {'GET': '/api/offices/<int:pk>/requests/<int:pk>/deny/'},
+        {'GET': '/api/desks/'},
+        {'GET': '/api/desks/<int:pk>/'},
+
+        {'POST': '/api/token/'},
+        {'POST': '/api/token/refresh'},
+        {'POST': '/login/'},
+    ]
+
+    def get(self, request):
+        if request.method == 'GET':
+            return Response(self.routes)
+
+
+
+class UserAdminPermission(BasePermission):
     message = 'You are not allowed to create users.'
 
-    def has_object_permission(self, request, view, obj):
-
-        # need to handle anonymous users. 
-        
-        if request.user.is_anonymous:
+    def has_permission(self, request, view):
+        response = JWTAuthentication().authenticate(request)
+        if response is not None:
+            user , token = response
+            role = token.get('role')
+            if role == 'Admin':
+                return True
             return False
-        else:
-            return request.user.role == 'Admin'
+            
+
+# Display Users
 
 
-class UserList(viewsets.ModelViewSet):
-    serializer_class = UserPostSerializer
-    # queryset = User.objects.all()
+class UserList(viewsets.ViewSet):
+    permission_classes = [UserAdminPermission]
 
-    # Define custom queryset
+    def get_query_set(self):
+        return User.objects.all()
+
+    def get_serializer_class(self, *args, **kwargs):
+            return UserPostSerializer
+
+    def list(self, request):
+        queryset = self.get_query_set()
+        serializer = self.get_serializer_class()
+        result = serializer(queryset, many=True)
+        return Response(result.data)
+
+    # def create(self, request):
+    #     serializer = self.get_serializer_class(data=request.data)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    # def retrieve(self, request, pk=None):
+    #     queryset = self.get_query_set()
+    #     user = get_object_or_404(queryset, pk=pk)
+    #     serializer = self.get_serializer_class(user)
+    #     return Response(serializer.data)
+
+    # def partial_update(self, request, pk=None):
+    #     queryset = self.get_query_set()
+    #     user = get_object_or_404(queryset, pk=pk)
+    #     serializer = self.get_serializer_class(user, data=request.data, partial=True)
+    #     serializer.is_valid(raise_exception=True)
+    #     serializer.save()
+    #     return Response(serializer.data)
+
+
+class patchUser(viewsets.ViewSet):
+    serializer_class = UserUpdateSerializer
+    permission_classes = [UserAdminPermission]
+
+
     def get_queryset(self):
         queryset = User.objects.all()
         return queryset
+
+    def update(self, request, pk=None):
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserUpdateSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class postUser(viewsets.ViewSet):
+    serializer_class = UserPostSerializer
+    permission_classes = [UserAdminPermission]
+
+    def create(self, request):
+        serializer = UserPostSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 # class UserList(viewsets.ViewSet):
 #     permission_classes = [IsAdminUser]

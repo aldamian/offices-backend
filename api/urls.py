@@ -1,5 +1,5 @@
 # from django.urls import path
-from .views import BlacklistTokenView, UserList #, UserDetail
+from .views import BlacklistTokenView, UserList, patchUser
 from rest_framework.routers import DefaultRouter
 
 

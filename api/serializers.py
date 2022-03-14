@@ -18,7 +18,7 @@ class UserUpdateSerializer(serializers.ModelSerializer):
     class Meta: 
         model = User
         fields = ('email', 'password', 'role', 'first_name', 'last_name', 'office_id', 'building_id',
-                  'gender', 'birth_date', 'nationality', 'remote_percentage', 'is_active')
+                  'gender', 'birth_date', 'nationality', 'remote_percentage', 'img_url', 'is_active')
         
     def update(self, validated_data):
         pass

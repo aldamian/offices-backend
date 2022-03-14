@@ -1,5 +1,5 @@
 from django.contrib import admin
-from api.views import LoginView
+from api.views import LoginView, getRoutesView
 from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -25,9 +25,10 @@ urlpatterns = [
     path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('admin/', admin.site.urls),
+    path('api/', include('api.urls', namespace='api')),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
     path('login/', LoginView.as_view(), name='customlogin'),
-    path('', include('api.urls', namespace='api')),
+    path('', getRoutesView.as_view(), name='getRoutes'),
     # API schema views
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$', schema_view.with_ui('swagger', cache_timeout=0), name='schema-swagger-ui'),

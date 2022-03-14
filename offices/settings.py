@@ -9,9 +9,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 SECRET_KEY = config('SECRET_KEY')
-
+SECRET_KEY_2 = config('SECRET_KEY_2')
 DEBUG = config('DEBUG', cast=bool)
-
 ALLOWED_HOSTS = ['offices-backend.herokuapp.com', '127.0.0.1']
 
 
@@ -144,7 +143,7 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': False,
 
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
+    'SIGNING_KEY': SECRET_KEY_2,
     'VERIFYING_KEY': None,
     'AUDIENCE': None,
     'ISSUER': None,

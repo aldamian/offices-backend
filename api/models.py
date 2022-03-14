@@ -245,6 +245,9 @@ class Office(models.Model):
     office_admin= models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, 
                                            db_column='office_admin_id')
 
+    # add long string
+    
+
     def __str__(self):
         return self.name
 
