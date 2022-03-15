@@ -113,10 +113,12 @@ USE_TZ = True
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
-CORS_ALLOWED_ORIGINS = [
-    "https://offices-frontend.herokuapp.com",
-    "http://localhost:3000",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     "https://offices-frontend.herokuapp.com",
+#     "http://localhost:3000",
+# ]
+
+CORS_ALLOW_ALL_ORIGINS = True
 
 # Custom user model
 AUTH_USER_MODEL = 'api.User'
