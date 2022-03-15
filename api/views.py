@@ -69,7 +69,8 @@ class UserAdminPermission(BasePermission):
 
 
 class UserList(viewsets.ViewSet):
-    permission_classes = [UserAdminPermission]
+    # permission_classes = [UserAdminPermission]
+    permission_classes = [AllowAny]
 
     def get_query_set(self):
         return User.objects.all()
@@ -83,11 +84,11 @@ class UserList(viewsets.ViewSet):
         result = serializer(queryset, many=True)
         return Response(result.data)
 
-    # def create(self, request):
-    #     serializer = self.get_serializer_class(data=request.data)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(serializer.data, status=status.HTTP_201_CREATED)
+    def create(self, request):
+        serializer = self.get_serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
     # def retrieve(self, request, pk=None):
     #     queryset = self.get_query_set()
