@@ -22,11 +22,7 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_('Users must have a first name.'))
         if not last_name:
             raise ValueError(_('Users must have a last name.'))
-<<<<<<< HEAD
         if nationality != '' or nationality != 'None':
-=======
-        if nationality != '' or nationality != 'None':
->>>>>>> main
             nationality=nationality.capitalize()
         
         try: 
