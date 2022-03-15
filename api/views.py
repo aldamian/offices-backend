@@ -69,8 +69,7 @@ class UserAdminPermission(BasePermission):
 
 
 class UserList(viewsets.ViewSet):
-    # permission_classes = [UserAdminPermission]
-    permission_classes = [AllowAny]
+    permission_classes = [UserAdminPermission]
     queryset = User.objects.all()
     serializer_class = UserPostSerializer
 
