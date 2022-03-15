@@ -1,5 +1,4 @@
 import os
-import django_heroku
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
@@ -11,8 +10,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config('SECRET_KEY')
 DEBUG = config('DEBUG', cast=bool)
-# ALLOWED_HOSTS = ['offices-backend.herokuapp.com', '127.0.0.1']
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['offices-backend.herokuapp.com', '127.0.0.1']
 
 
 # Application definition
@@ -71,16 +69,14 @@ WSGI_APPLICATION = 'offices.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'offices',
-        'USER': 'postgres',
-        'PASSWORD': config('DB_PASSWORD'),
-        'HOST': '127.0.0.1',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_REMOTE_PASSWORD'),
+        'HOST': config('DB_HOST'),
         'PORT': '5432',
     }
 }
-
-django_heroku.settings(locals())
 
 
 # Password validation
