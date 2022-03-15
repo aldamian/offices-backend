@@ -50,6 +50,8 @@ class getRoutesView(APIView):
             return Response(self.routes)
 
 
+# Custom permissions for the API
+
 
 class UserAdminPermission(BasePermission):
     message = 'You are not allowed to create users.'
@@ -180,5 +182,5 @@ class BlacklistTokenView(APIView):
             return Response(status=status.HTTP_400_BAD_REQUEST)
 
 
-class LoginView(TokenObtainPairView):
+class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
