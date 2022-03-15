@@ -62,7 +62,6 @@ class UserAdminPermission(BasePermission):
             role = token.get('role')
             if role == 'Admin':
                 return True
-            return False
         return False
             
 
@@ -70,7 +69,8 @@ class UserAdminPermission(BasePermission):
 
 
 class UserList(viewsets.ViewSet):
-    permission_classes = [UserAdminPermission]
+    # permission_classes = [UserAdminPermission]
+    permission_classes = [AllowAny]
     queryset = User.objects.all()
     serializer_class = UserPostSerializer
 
@@ -82,7 +82,6 @@ class UserList(viewsets.ViewSet):
     # create a new user with CustomUserManager
     def create(self, request):
         serializer = UserPostSerializer(data=request.data)
-        # perform validation checks
         if serializer.is_valid():
             user = User.objects.create_superuser(
                 email=serializer.validated_data['email'],
@@ -219,3 +218,4 @@ class BlacklistTokenView(APIView):
 
 class MyTokenObtainPairView(TokenObtainPairView):
     serializer_class = MyTokenObtainPairSerializer
+
