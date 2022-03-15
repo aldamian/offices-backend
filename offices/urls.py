@@ -1,10 +1,10 @@
 from django.contrib import admin
-from api.views import LoginView, getRoutesView
+from api.views import getRoutesView, MyTokenObtainPairView
 from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 
 
 schema_view = get_schema_view(
@@ -22,12 +22,10 @@ schema_view = get_schema_view(
 
 
 urlpatterns = [
-    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('admin/', admin.site.urls),
     path('api/', include('api.urls', namespace='api')),
-    path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),
-    path('login/', LoginView.as_view(), name='customlogin'),
     path('', getRoutesView.as_view(), name='getRoutes'),
     # API schema views
     re_path(r'^swagger(?P<format>\.json|\.yaml)$', schema_view.without_ui(cache_timeout=0), name='schema-json'),
