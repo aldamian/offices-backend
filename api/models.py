@@ -9,7 +9,7 @@ from django.conf import settings
 class CustomUserManager(BaseUserManager):
     
     def create_user(self, email, password, role, first_name, last_name, office_id, building_id, 
-                    gender, birth_date, nationality, remote_percentage,
+                    gender, birth_date, nationality, remote_percentage, 
                     **other_fields):
 
         if not email:
@@ -22,7 +22,7 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_('Users must have a first name.'))
         if not last_name:
             raise ValueError(_('Users must have a last name.'))
-        if nationality != None:
+        if nationality != '':
             nationality=nationality.capitalize
         
         try: 
@@ -75,7 +75,7 @@ class CustomUserManager(BaseUserManager):
 
         
         return self.create_user(email, password, role, first_name, last_name, office_id, building_id, 
-                                gender, birth_date, nationality, remote_percentage, 
+                                gender, birth_date, nationality, remote_percentage,
                                 **other_fields)
 
 
