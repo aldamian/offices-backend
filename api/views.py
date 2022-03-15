@@ -106,7 +106,8 @@ class UserList(viewsets.ViewSet):
 
 class patchUser(viewsets.ViewSet):
     serializer_class = UserUpdateSerializer
-    permission_classes = [UserAdminPermission]
+    # permission_classes = [UserAdminPermission]
+    permission_classes = [AllowAny]
 
 
     def get_queryset(self):
