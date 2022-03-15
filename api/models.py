@@ -23,7 +23,7 @@ class CustomUserManager(BaseUserManager):
         if not last_name:
             raise ValueError(_('Users must have a last name.'))
         if nationality != '':
-            nationality=nationality.capitalize
+            nationality=nationality.capitalize()
         
         try: 
             int(office_id) 
