@@ -66,11 +66,8 @@ class UserAdminPermission(BasePermission):
             
 
 # Display Users
-
-
 class UserList(viewsets.ViewSet):
-    # permission_classes = [UserAdminPermission]
-    permission_classes = [AllowAny]
+    permission_classes = [UserAdminPermission]
     queryset = User.objects.all()
     serializer_class = UserPostSerializer
 
@@ -101,12 +98,24 @@ class UserList(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-    # Display a single user
+class UserDetail(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+    serializer_class = UserUpdateSerializer
 
+    # Display a single user
     def retrieve(self, request, pk=None):
         user = get_object_or_404(User, pk=pk)
         serializer = UserPostSerializer(user)
         return Response(serializer.data)
+
+    # Update a user
+    def update(self, request, pk=None):
+        user = get_object_or_404(User, pk=pk)
+        serializer = UserUpdateSerializer(user, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
     # def list(self, request):
@@ -136,37 +145,6 @@ class UserList(viewsets.ViewSet):
     #     serializer.is_valid(raise_exception=True)
     #     serializer.save()
     #     return Response(serializer.data)
-
-
-class patchUser(viewsets.ViewSet):
-    serializer_class = UserUpdateSerializer
-    # permission_classes = [UserAdminPermission]
-    permission_classes = [AllowAny]
-
-
-    def get_queryset(self):
-        queryset = User.objects.all()
-        return queryset
-
-    def update(self, request, pk=None):
-        user = get_object_or_404(User, pk=pk)
-        serializer = UserUpdateSerializer(user, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-class postUser(viewsets.ViewSet):
-    serializer_class = UserPostSerializer
-    permission_classes = [UserAdminPermission]
-
-    def create(self, request):
-        serializer = UserPostSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
 # class UserList(viewsets.ViewSet):
