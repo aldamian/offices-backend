@@ -1,4 +1,5 @@
 import os
+import django_heroku
 from pathlib import Path
 from datetime import timedelta
 from decouple import config
@@ -34,11 +35,9 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
 
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 
     'django.contrib.sessions.middleware.SessionMiddleware',
-
-    'corsheaders.middleware.CorsMiddleware',
-    
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -73,13 +72,15 @@ WSGI_APPLICATION = 'offices.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': 'das5vetp49k2ra',
-        'USER': 'ixofyapbnztlgu',
+        'NAME': 'offices',
+        'USER': 'postgres',
         'PASSWORD': config('DB_PASSWORD'),
-        'HOST': 'ec2-52-209-185-5.eu-west-1.compute.amazonaws.com',
+        'HOST': '127.0.0.1',
         'PORT': '5432',
     }
 }
+
+django_heroku.settings(locals())
 
 
 # Password validation
@@ -148,7 +149,6 @@ SIMPLE_JWT = {
     'UPDATE_LAST_LOGIN': False,
 
     'ALGORITHM': 'HS256',
-    'SIGNING_KEY': SECRET_KEY,
     'VERIFYING_KEY': None,
     'AUDIENCE': None,
     'ISSUER': None,
