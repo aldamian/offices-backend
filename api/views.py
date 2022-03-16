@@ -51,6 +51,16 @@ class getRoutesView(APIView):
 
 
 # Custom permissions for the API
+class UserAuthenticatedPermission(BasePermission):
+    message = 'You are not authenticated.'
+
+    def has_permission(self, request, view):
+        response = JWTAuthentication().authenticate(request)
+        if response is not None:
+            return True
+        return False
+
+
 class UserAdminPermission(BasePermission):
     message = 'You do not have Admin privileges.'
 
