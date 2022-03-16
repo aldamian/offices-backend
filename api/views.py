@@ -1,12 +1,13 @@
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework.response import Response
 from rest_framework import generics
 from rest_framework.decorators import api_view
-from .models import User, CustomUserManager
-from .serializers import UserUpdateSerializer, UserPostSerializer, UserUpdateSerializer, MyTokenObtainPairSerializer
+from .models import User, Building, Office, Desk, Request
+from .serializers import UserPostSerializer, UserUpdateSerializer, RequestSerializer, BuildingSerializer, OfficeSerializer, DeskSerializer, MyTokenObtainPairSerializer
 from rest_framework import status, viewsets
 from rest_framework.views import APIView
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework. permissions import SAFE_METHODS, BasePermission, IsAdminUser, DjangoModelPermissions
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -23,25 +24,26 @@ class getRoutesView(APIView):
     permission_classes = [AllowAny]
 
     routes = [
-        {'GET': '/swagger/', 'description': 'API Documentation'},
-        {'GET': '/admin/', 'description': 'Admin Dashboard'},
-        {'GET': '/api/users/'},
-        {'GET': '/api/users/<int:pk>/'},
-        {'GET': '/api/users/<int:pk>/requests/'},
-        {'GET': '/api/buildings/'},
-        {'GET': '/api/buildings/<int:pk>/'},
-        {'GET': '/api/offices/'},
-        {'GET': '/api/offices/<int:pk>/'},
-        {'GET': '/api/offices/<int:pk>/requests/'},
-        {'GET': '/api/offices/<int:pk>/requests/<int:pk>/'},
-        {'GET': '/api/offices/<int:pk>/requests/<int:pk>/approve/'},
-        {'GET': '/api/offices/<int:pk>/requests/<int:pk>/deny/'},
-        {'GET': '/api/desks/'},
-        {'GET': '/api/desks/<int:pk>/'},
+        {'GET': '/swagger', 'description': 'API Documentation'},
+        {'GET': '/admin', 'description': 'Admin Dashboard'},
+        {'GET': '/api/users'},
+        {'GET': '/api/users/<int:pk>'},
+        {'GET': '/api/users/<int:pk>/requests'},
+        {'GET': '/api/buildings'},
+        {'GET': '/api/buildings/<int:pk>'},
+        {'GET': '/api/offices'},
+        {'GET': '/api/offices/<int:pk>'},
+        {'GET': '/api/offices/<int:pk>/requests'},
+        {'GET': '/api/offices/<int:pk>/requests/<int:pk>'},
+        {'GET': '/api/offices/<int:pk>/requests/<int:pk>/approve'},
+        {'GET': '/api/offices/<int:pk>/requests/<int:pk>/deny'},
+        {'GET': '/api/desks'},
+        {'GET': '/api/desks/<int:pk>'},
 
-        {'POST': '/api/token/'},
+        {'POST': '/api/token'},
         {'POST': '/api/token/refresh'},
-        {'POST': '/login/'},
+        {'POST': '/api/token/blacklist'},
+        {'POST': '/api/me'},
     ]
 
     def get(self, request):
@@ -50,10 +52,8 @@ class getRoutesView(APIView):
 
 
 # Custom permissions for the API
-
-
 class UserAdminPermission(BasePermission):
-    message = 'You are not allowed to create users.'
+    message = 'You do not have Admin privileges.'
 
     def has_permission(self, request, view):
         response = JWTAuthentication().authenticate(request)
@@ -64,10 +64,25 @@ class UserAdminPermission(BasePermission):
                 return True
             return False
         return False
+
+
+class UserOfficeAdminPermission(BasePermission):
+    message = 'You do not have Office Admin privileges.'
+
+    def has_permission(self, request, view):
+        response = JWTAuthentication().authenticate(request)
+        if response is not None:
+            user , token = response
+            role = token.get('role')
+            if role == 'Office Admin':
+                return True
+            return False
+        return False
             
 
 # Display Users
 class UserList(viewsets.ViewSet):
+    # prod - change permission_classes to [UserAdminPermission]
     permission_classes = [AllowAny]
     queryset = User.objects.all()
     serializer_class = UserPostSerializer
@@ -100,67 +115,184 @@ class UserList(viewsets.ViewSet):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
+class Me(viewsets.ViewSet):
+    permission_classes = [AllowAny]
+
+    def list(self, request):
+        response = JWTAuthentication().authenticate(request)
+        if response is not None:
+            user , token = response
+            user = get_object_or_404(User, pk=user.id)
+            response_fields = ['id', 'email', 'first_name', 'last_name', 'role' ]
+            return JsonResponse(model_to_dict(user), fields=response_fields,  safe=False)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
 class UserDetail(viewsets.ViewSet):
+    # prod - change permission_classes to [UserAdminPermission]
     permission_classes = [AllowAny]
     serializer_class = UserUpdateSerializer
 
     # Display a single user
     def retrieve(self, request, pk=None):
         user = get_object_or_404(User, pk=pk)
-        serializer = UserPostSerializer(user)
+        serializer = UserUpdateSerializer(user)
         return Response(serializer.data)
 
     # Update a user
+    # to-do: handle password update
     def update(self, request, pk=None):
-        user = get_object_or_404(User, pk=pk)
-        serializer = UserUpdateSerializer(user, data=request.data)
+        response = JWTAuthentication().authenticate(request)
+        if response is not None:
+            user , token = response
+            serializer = UserUpdateSerializer(user, data=request.data)
+            if serializer.is_valid():
+                user.save()
+                return Response(serializer.data)
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
+
+
+# Display Buildings
+class BuildingList(viewsets.ViewSet):
+    # prod - change permission_classes to [UserAdminPermission]
+    permission_classes = [AllowAny]
+    queryset = Building.objects.all()
+    serializer_class = BuildingSerializer
+
+    def list(self, request):
+        buildings = Building.objects.all()
+        serializer = BuildingSerializer(buildings, many=True)
+        return Response(serializer.data)
+
+    # create a new building
+    def create(self, request):
+        serializer = BuildingSerializer(data=request.data)
+        # perform validation checks
+        if serializer.is_valid():
+            building = Building.objects.create(
+                name=serializer.validated_data['name'],
+                address=serializer.validated_data['address'],
+                floors_count=serializer.validated_data['floors_count'],
+                img_url=serializer.validated_data['img_url'],
+            )
+            building.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # update a building
+    def update(self, request, pk=None):
+        building = get_object_or_404(Building, pk=pk)
+        serializer = BuildingSerializer(building, data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-    # def list(self, request):
-    #     queryset = self.get_query_set()
-    #     serializer = UserPostSerializer(queryset, many=True)
-    #     return Response(serializer.data)
-
-    # def create(self, request):
-    #     serializer = UserPostSerializer(data=request.data)
-    #     if serializer.is_valid():
-    #         serializer.save()
-    #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-    #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    # delete a building 
+    # to-do: can delete only if offices are empty
+    def destroy(self, request, pk=None):
+        building = get_object_or_404(Building, pk=pk)
+        building.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
+# Display Offices
+class OfficeList(viewsets.ViewSet):
+    # prod - change permission_classes to [UserAdminPermission]
+    permission_classes = [AllowAny]
+    queryset = Office.objects.all()
+    serializer_class = OfficeSerializer
 
-    # def retrieve(self, request, pk=None):
-    #     queryset = self.get_query_set()
-    #     user = get_object_or_404(queryset, pk=pk)
-    #     serializer = self.get_serializer_class(user)
-    #     return Response(serializer.data)
+    def list(self, request):
+        offices = Office.objects.all()
+        serializer = OfficeSerializer(offices, many=True)
+        return Response(serializer.data)
 
-    # def partial_update(self, request, pk=None):
-    #     queryset = self.get_query_set()
-    #     user = get_object_or_404(queryset, pk=pk)
-    #     serializer = self.get_serializer_class(user, data=request.data, partial=True)
-    #     serializer.is_valid(raise_exception=True)
-    #     serializer.save()
-    #     return Response(serializer.data)
+    # create a new office
+    def create(self, request):
+        serializer = OfficeSerializer(data=request.data)
+        # perform validation checks
+        if serializer.is_valid():
+            office = Office.objects.create(
+                name=serializer.validated_data['name'],
+                building_id=serializer.validated_data['building_id'],
+                floor_number=serializer.validated_data['floor_number'],
+                total_desks=serializer.validated_data['total_desks'],
+                usable_desks=serializer.validated_data['usable_desks'],
+                x_size_m=serializer.validated_data['x_size_m'],
+                y_size_m=serializer.validated_data['y_size_m'],
+                desk_ids=serializer.validated_data['desk_ids'],
+                office_admin=serializer.validated_data['office_admin'],
+            )
+            office.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # update a office
+    def update(self, request, pk=None):
+        office = get_object_or_404(Office, pk=pk)
+        serializer = OfficeSerializer(office, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # delete an office 
+    # to-do: can delete only if desks are empty
+    def destroy(self, request, pk=None):
+        office = get_object_or_404(Office, pk=pk)
+        office.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-# class UserList(viewsets.ViewSet):
-#     permission_classes = [IsAdminUser]
-#     queryset = User.objects.all()
+# Display Desks
+class DeskList(viewsets.ViewSet):
+    # prod - change permission_classes to [UserAdminPermission]
+    permission_classes = [AllowAny]
+    queryset = Desk.objects.all()
+    serializer_class = DeskSerializer
 
-#     def list(self, request):
-#         serializer_class = UserSerializer(self.queryset, many=True)
-#         return Response(serializer_class.data)
+    def list(self, request):
+        desks = Desk.objects.all()
+        serializer = DeskSerializer(desks, many=True)
+        return Response(serializer.data)
 
-#     def retrieve(self, request, pk=None):
-#         post = get_object_or_404(self.queryset, pk=pk)
-#         serializer_class = UserSerializer(post)
-#         return Response(serializer_class.data)
+    # create a new desk
+    def create(self, request):
+        serializer = DeskSerializer(data=request.data)
+        # perform validation checks
+        if serializer.is_valid():
+            desk = Desk.objects.create(
+                office_id=serializer.validated_data['office_id'],
+                desk_number=serializer.validated_data['desk_number'],
+                user_id=serializer.validated_data['user_id'],
+                is_usable=serializer.validated_data['is_usable'],
+                x_size_m=serializer.validated_data['x_size_m'],
+                y_size_m=serializer.validated_data['y_size_m'],
+                x_pos_px=serializer.validated_data['x_pos_px'],
+                y_pos_px=serializer.validated_data['y_pos_px'],
+            )
+            desk.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # update a desk
+    def update(self, request, pk=None):
+        desk = get_object_or_404(Desk, pk=pk)
+        serializer = DeskSerializer(desk, data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    # delete a desk 
+    # to-do: can delete only if no user is assigned
+    def destroy(self, request, pk=None):
+        desk = get_object_or_404(Desk, pk=pk)
+        desk.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
 
     # def create(self, request):
     # def list(self, request):
@@ -170,18 +302,10 @@ class UserDetail(viewsets.ViewSet):
     # def destroy(self, request, pk=None):
 
 
-# class UserList(generics.ListCreateAPIView):
-#     permission_classes = [IsAdminUser]
-#     queryset = User.objects.all()
-#     serializer_class = UserSerializer
-
-
-# # could use RetrieveUpdateDestroy instead?
-# # by using the type, we can control what the api does
-# class UserDetail(generics.RetrieveUpdateAPIView, UserPostPermission):
-#     permission_classes = [UserPostPermission]
-#     queryset = User.objects.all()
-#     serializer_class = UserSerializer
+# Display Requests
+class RequestList(viewsets.ViewSet):
+    # prod - change permission_classes to [IsAuthenticated]
+    pass
 
 
 class BlacklistTokenView(APIView):
