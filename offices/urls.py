@@ -1,5 +1,5 @@
 from django.contrib import admin
-from api.views import getRoutesView, MyTokenObtainPairView
+from api.views import getRoutesView, MyTokenObtainPairView, BlacklistTokenView
 from django.urls import path, include, re_path
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
@@ -23,8 +23,9 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('api/token', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
-    path('admin', admin.site.urls),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/blacklist/', BlacklistTokenView.as_view(), name='token_blacklist'),
+    path('admin/', admin.site.urls),
     path('api/', include('api.urls', namespace='api')),
     path('', getRoutesView.as_view(), name='getRoutes'),
     # API schema views

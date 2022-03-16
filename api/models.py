@@ -1,5 +1,6 @@
 from re import T
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
@@ -192,7 +193,8 @@ class Request(models.Model):
                                               MinValueValidator(0)
                                           ])
     request_reason = models.TextField(null=False, blank=False)
-    status = models.CharField(max_length=1,choices=STATUS_CHOICES, default=PENDING, null=False, blank=False)
+    status = models.CharField(max_length=1,choices=STATUS_CHOICES, default=PENDING, 
+                              null=False, blank=False)
     reject_reason = models.TextField(blank=True, default='Request denied.')
 
     def __str__(self):
@@ -220,7 +222,7 @@ class Request(models.Model):
 class Building(models.Model):
     name = models.CharField(max_length=200, null=False, blank=False)
     floors_count = models.PositiveIntegerField(null=False, blank=False)
-    building_address = models.CharField(max_length=200, null=False, blank=False)
+    address = models.CharField(max_length=200, null=False, blank=False)
     img_url = models.CharField(max_length=200, blank=True)
 
     def __str__(self):
@@ -230,7 +232,7 @@ class Building(models.Model):
         return self.floors_count
 
     def get_building_address(self):
-        return self.building_address
+        return self.address
 
 
 class Office(models.Model):
@@ -240,13 +242,14 @@ class Office(models.Model):
     floor_number = models.PositiveIntegerField(null=False, blank=False)
     total_desks = models.PositiveIntegerField(null=False, blank=False)
     usable_desks = models.PositiveIntegerField(null=False, blank=False)
-    
+    x_size_m = models.FloatField(null=False, blank=False, default=0.0)
+    y_size_m = models.FloatField(null=False, blank=False, default=0.0)
+
+    # array of desk ids
+    desk_ids = ArrayField(models.PositiveIntegerField(), null = True, blank=True)
 
     office_admin= models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, 
                                            db_column='office_admin_id')
-
-    # add long string
-    
 
     def __str__(self):
         return self.name
@@ -268,10 +271,15 @@ class Office(models.Model):
 
 
 class Desk(models.Model):
-    desk_number = models.PositiveIntegerField(null=False, blank=False)
     office_id = models.ForeignKey('Office', on_delete=models.CASCADE, null=False, blank=False, 
                                   db_column='office_id') # [null] means that request is remote
-    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True, db_column='user_id')
+    desk_number = models.PositiveIntegerField(null=False, blank=False)
+    user_id = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, 
+                                null=True, blank=True, db_column='user_id')
+    x_size_m = models.FloatField(null=False, blank=False, default=0.0)
+    y_size_m = models.FloatField(null=False, blank=False, default=0.0)
+    x_pos_px = models.PositiveIntegerField(null=False, blank=False, default=0)
+    y_pos_px = models.PositiveIntegerField(null=False, blank=False, default=0)
     is_usable = models.BooleanField(default=True)
 
     def __str__(self):
