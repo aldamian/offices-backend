@@ -13,8 +13,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.forms.models import model_to_dict
-# import JsonResponse
-# 
+
 
 # These views are endpoints for the API
 # to-do: add proper permissions for each endpoint. Use obj.role to determine permissions
@@ -112,16 +111,15 @@ class UserList(viewsets.ViewSet):
 
 
 class Me(viewsets.ViewSet):
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
 
     def list(self, request):
         response = JWTAuthentication().authenticate(request)
-        if response is not None:
-            user , token = response
-            user = get_object_or_404(User, pk=user.id)
-            response_fields = ['id', 'email', 'first_name', 'last_name', 'role' ]
-            return JsonResponse(model_to_dict(user), fields=response_fields,  safe=False)
-        return Response(status=status.HTTP_401_UNAUTHORIZED)
+        user , token = response
+        user = get_object_or_404(User, pk=user.id)
+        response_fields = ['id', 'email', 'first_name', 'last_name', 'role' ]
+        return JsonResponse(model_to_dict(user), fields=response_fields,  safe=False)
+        # return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
 class UserDetail(viewsets.ViewSet):
@@ -301,7 +299,43 @@ class DeskList(viewsets.ViewSet):
 # Display Requests
 class RequestList(viewsets.ViewSet):
     # prod - change permission_classes to [IsAuthenticated]
-    pass
+    permission_classes = [AllowAny]
+    serializer_class = RequestSerializer
+
+    def list(self, request):
+        response = JWTAuthentication().authenticate(request)
+        if response is not None:
+            user, token = response
+            role = token.get('role')
+            if role == 'Admin':
+                # get remote pending requests
+                requests = Request.objects.filter(status='P', remote_percentage__gt=0)
+                return Response(RequestSerializer(requests, many=True).data)
+            elif role == 'Office Admin':
+                # get desk requests
+                # requests = Request.objects.filter(status='P', )
+                pass
+                
+
+            
+
+    # create a new request
+    def create(self, request):
+        serializer = RequestSerializer(data=request.data)
+        # perform validation checks
+        if serializer.is_valid():
+            request = Request.objects.create(
+                office_id=serializer.validated_data['office_id'],
+                user_id=serializer.validated_data['user_id'],
+                is_approved=serializer.validated_data['is_approved'],
+                is_rejected=serializer.validated_data['is_rejected'],
+                is_cancelled=serializer.validated_data['is_cancelled'],
+            )
+            request.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
 
 
 class BlacklistTokenView(APIView):
