@@ -12,8 +12,7 @@ from django.forms.models import model_to_dict
 
 # Display Requests
 class RequestList(viewsets.ViewSet):
-    # prod - change permission_classes to [IsAuthenticated]
-    permission_classes = [AllowAny]
+    permission_classes = [UserAuthenticatedPermission]
     serializer_class = RequestSerializer
 
     def list(self, request):
@@ -27,26 +26,34 @@ class RequestList(viewsets.ViewSet):
                 return Response(RequestSerializer(requests, many=True).data)
             elif role == 'Office Admin':
                 # get desk requests
-                # requests = Request.objects.filter(status='P', )
-                pass
+                requests = Request.objects.filter(status='P', office_id=user.office_id)
+                return Response(RequestSerializer(requests, many=True).data)
+            elif role == 'Employee':
+                # get user requests
+                requests = Request.objects.filter(user_id=user.id)
+                return Response(RequestSerializer(requests, many=True).data, status=status.HTTP_200_OK)
+        return Response(status=status.HTTP_401_UNAUTHORIZED)
                 
-
-            
 
     # create a new request
     def create(self, request):
         serializer = RequestSerializer(data=request.data)
-        # perform validation checks
+        
         if serializer.is_valid():
-            request = Request.objects.create(
-                office_id=serializer.validated_data['office_id'],
-                user_id=serializer.validated_data['user_id'],
-                is_approved=serializer.validated_data['is_approved'],
-                is_rejected=serializer.validated_data['is_rejected'],
-                is_cancelled=serializer.validated_data['is_cancelled'],
-            )
-            request.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            active_requests = Request.objects.filter(user_id=serializer.validated_data['user_id'], status='P')
+            if active_requests.count() > 0:
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            else: 
+                request = Request.objects.create(
+                    office_id=serializer.validated_data['office_id'],
+                    user_id=serializer.validated_data['user_id'],
+                    remote_percentage=serializer.validated_data['remote_percentage'],
+                    request_reason=serializer.validated_data['request_reason'],
+                    status=serializer.validated_data['status'],
+                    reject_reason=serializer.validated_data['reject_reason'],
+                )
+                request.save()
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
 
