@@ -121,14 +121,14 @@ class UserList(viewsets.ViewSet):
 
 
 class Me(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [UserAuthenticatedPermission]
 
     def list(self, request):
         response = JWTAuthentication().authenticate(request)
         user , token = response
         user = get_object_or_404(User, pk=user.id)
         response_fields = ['id', 'email', 'first_name', 'last_name', 'role' ]
-        return JsonResponse(model_to_dict(user), fields=response_fields,  safe=False)
+        return JsonResponse(model_to_dict(user, fields=response_fields), safe=False)
         # return Response(status=status.HTTP_401_UNAUTHORIZED)
 
 
