@@ -23,8 +23,8 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path('api/token', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/token/refresh', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/token/blacklist', BlacklistTokenView.as_view(), name='token_blacklist'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/token/blacklist/', BlacklistTokenView.as_view(), name='token_blacklist'),
     path('admin', admin.site.urls),
     path('api/', include('api.urls', namespace='api')),
     path('', getRoutesView.as_view(), name='getRoutes'),

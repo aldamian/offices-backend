@@ -1,4 +1,8 @@
-from .views import Me, UserList, UserDetail, BuildingList, OfficeList, DeskList, RequestList 
+from .user_views import Me, UserList, UserDetail
+from .building_views import BuildingList#, BuildingDetail
+from .office_views import OfficeList#, OfficeDetail
+from .desk_views import DeskList#, DeskDetail
+from .request_views import RequestList#, RequestDetail
 from rest_framework.routers import DefaultRouter
 
 
