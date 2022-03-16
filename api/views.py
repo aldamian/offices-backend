@@ -121,7 +121,7 @@ class UserList(viewsets.ViewSet):
 
 
 class Me(viewsets.ViewSet):
-    permission_classes = [UserAuthenticatedPermission]
+    permission_classes = [UserAdminPermission]
 
     def list(self, request):
         response = JWTAuthentication().authenticate(request)

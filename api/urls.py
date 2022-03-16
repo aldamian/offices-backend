@@ -1,4 +1,3 @@
-# from django.urls import path
 from .views import Me, UserList, UserDetail, BuildingList, OfficeList, DeskList, RequestList 
 from rest_framework.routers import DefaultRouter
 

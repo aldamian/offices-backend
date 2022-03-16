@@ -23,6 +23,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'drf_yasg',
+    'django_extensions',
     'rest_framework',
     'api',
     'corsheaders',
@@ -74,10 +75,6 @@ DATABASES = {
         'USER': config('DB_USER'),
         'PASSWORD': config('DB_REMOTE_PASSWORD'),
         'HOST': config('DB_HOST'),
-        # 'NAME': 'offices',
-        # 'USER': 'postgres',
-        # 'PASSWORD': 'Admin1234',
-        # 'HOST': 'localhost',
         'PORT': '5432',
     }
 }
