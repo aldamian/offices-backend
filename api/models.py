@@ -1,4 +1,5 @@
 from re import T
+from datetime import datetime
 from django.db import models
 from django.contrib.postgres.fields import ArrayField
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
@@ -25,6 +26,11 @@ class CustomUserManager(BaseUserManager):
             raise ValueError(_('Users must have a last name.'))
         if nationality != '' or nationality != 'None':
             nationality=nationality.capitalize()
+        if birth_date:
+            present=datetime.now()
+            if birth_date > present.date():
+                raise ValueError(_("Can't select a future date."))
+        
         
         try: 
             int(office_id) 

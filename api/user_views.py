@@ -1,5 +1,5 @@
 from .models import User
-from .serializers import UserPostSerializer, UserUpdateSerializer
+from .serializers import UserListSerializer, UserPostSerializer, UserUpdateSerializer
 from .permissions import UserAuthenticatedPermission, UserAdminPermission, UserOfficeAdminPermission
 from rest_framework import status, viewsets
 from rest_framework.response import Response
@@ -29,7 +29,7 @@ class UserList(viewsets.ViewSet):
 
     def list(self, request):
         users = User.objects.all()
-        serializer = UserPostSerializer(users, many=True)
+        serializer = UserListSerializer(users, many=True)
         return Response(serializer.data)
 
     # create a new user with CustomUserManager
