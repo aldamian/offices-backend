@@ -7,7 +7,6 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils.translation import gettext_lazy as _
 from django.conf import settings
 
-# does commit work?
 
 class CustomUserManager(BaseUserManager):
     
