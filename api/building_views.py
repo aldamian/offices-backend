@@ -12,7 +12,7 @@ from django.forms.models import model_to_dict
 
 # Display Buildings
 class BuildingList(viewsets.ViewSet):
-    permission_classes = [UserAdminPermission, UserOfficeAdminPermission]
+    permission_classes = [UserAdminPermission|UserOfficeAdminPermission]
     queryset = Building.objects.all()
     serializer_class = BuildingSerializer
 
