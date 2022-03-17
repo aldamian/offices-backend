@@ -12,7 +12,7 @@ from django.forms.models import model_to_dict
 
 # Display Offices
 class OfficeList(viewsets.ViewSet):
-    permission_classes = [UserAdminPermission, UserOfficeAdminPermission]
+    permission_classes = [UserAdminPermission|UserOfficeAdminPermission]
     queryset = Office.objects.all()
     serializer_class = OfficeSerializer
 
@@ -26,23 +26,15 @@ class OfficeList(viewsets.ViewSet):
         office = get_object_or_404(Office, pk=pk)
         office_serialized = OfficeGetSerializer(office)
         # get all desks in the office from 
-        #desks = Desk.objects.filter(office_id=office.id)
+        desks = Desk.objects.filter(office_id=office_serialized.data['id'])
+        for desk in desks:
+            desk_serialized = DeskGetSerializer(desk)
+            user_name = User.objects.get(id=desk_serialized.data['user_id']).get_full_name()
+            # append full name field to desk
+            desk_serialized.data['user_name'] = user_name
+            office_serialized.data['desks_ids'].append(desk_serialized.data)
+        return Response(office_serialized.data)
 
-        office = get_object_or_404(Office, pk=pk)
-        desks = Desk.objects.filter(office_id=pk)
-        # get user name by user_id
-        user_name = User.objects.get(id=office.office_admin).username
-
-        users = User.objects.filter(user_id=pk)
-        serializer_office = OfficeSerializer(office)
-        serializer_desks = DeskGetSerializer(desks, many=True)
-        result = {}
-        temp_result={}
-        temp_result.update()
-        result.update(serializer_office.data)
-        
-
-        return Response(serializer.data)
 
     # create a new office
     def create(self, request):
