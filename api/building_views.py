@@ -4,10 +4,8 @@ from .permissions import UserAuthenticatedPermission, UserAdminPermission, UserO
 from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from django.shortcuts import get_object_or_404
 from django.http import JsonResponse
-from django.forms.models import model_to_dict
 
 
 # Display Buildings
@@ -21,7 +19,11 @@ class BuildingList(viewsets.ViewSet):
         serializer = BuildingSerializer(buildings, many=True)
         return Response(serializer.data)
 
-    # create a new building
+    def retrieve(self, request, pk=None):
+        building = get_object_or_404(Building, pk=pk)
+        serializer = BuildingSerializer(building)
+        return Response(serializer.data)
+
     def create(self, request):
         serializer = BuildingSerializer(data=request.data)
         if serializer.is_valid():
@@ -54,6 +56,5 @@ class BuildingList(viewsets.ViewSet):
         if get_offices:
             # can't delete buildings with offices
             return Response(status=status.HTTP_400_BAD_REQUEST)
-        else:
-            building.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
+        building.delete()
+        return Response({"Success": "Building deleted succesfully."}, status=status.HTTP_204_NO_CONTENT)

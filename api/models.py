@@ -228,7 +228,7 @@ class Request(models.Model):
 class Building(models.Model):
     name = models.CharField(max_length=200, null=False, blank=False)
     floors_count = models.PositiveIntegerField(null=False, blank=False)
-    address = models.CharField(max_length=200, null=False, blank=False)
+    address = models.CharField(max_length=200, null=False, blank=False, unique=True)
     img_url = models.CharField(max_length=200, blank=True)
 
     def __str__(self):

@@ -77,3 +77,12 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
         token['role'] = user.role
         
         return token
+
+    # check if user is active
+    def validate(self, attrs):
+        data = super().validate(attrs)
+
+        if not self.user.is_active:
+            raise serializers.ValidationError("User is not active.")
+            
+        return data
