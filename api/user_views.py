@@ -36,7 +36,7 @@ class UserList(viewsets.ViewSet):
     def create(self, request):
         serializer = UserPostSerializer(data=request.data)
         if serializer.is_valid():
-            user = User.objects.create_superuser(
+            user = User.objects.create_user(
                 email=serializer.validated_data['email'],
                 password=serializer.validated_data['password'],
                 role=serializer.validated_data['role'],
