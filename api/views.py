@@ -1,10 +1,13 @@
-from rest_framework.response import Response
-from .serializers import MyTokenObtainPairSerializer
-from rest_framework import status
+from .permissions import UserAdminPermission
+from .models import User
+from .serializers import MyTokenObtainPairSerializer, ChangePasswordSerializer
+from rest_framework import viewsets, status
 from rest_framework.views import APIView
+from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 
 #API endpoints
@@ -37,6 +40,22 @@ class getRoutesView(APIView):
     def get(self, request):
         if request.method == 'GET':
             return Response(self.routes)
+
+
+class ChangePasswordView(viewsets.ViewSet):
+    permission_classes = [UserAdminPermission]
+    serializer_class = ChangePasswordSerializer
+    queryset = User.objects.all()
+
+    def post(self, request, pk=None):
+        serializer = ChangePasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            user = User.objects.get(pk=pk)
+            user.set_password(serializer.validated_data['new_password'])
+            user.save()
+            return Response(status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
 
 
 class BlacklistTokenView(APIView):

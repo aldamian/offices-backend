@@ -1,6 +1,7 @@
-from rest_framework import serializers
 from .models import User, Building, Office, Desk, Request
+from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+import django.contrib.auth.password_validation as validate_password
 
 
 class UserListSerializer(serializers.ModelSerializer):
@@ -48,6 +49,22 @@ class DeskSerializer(serializers.ModelSerializer):
         model = Desk
         fields = ('office_id', 'desk_number', 'user_id', 'is_usable',
                   'x_size_m', 'y_size_m', 'x_pos_px', 'y_pos_px')
+
+
+# admin can set new password for user
+class ChangePasswordSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True, required = True, validators=[validate_password])
+    password2 = serializers.CharField(write_only=True, required = True)
+
+    class Meta:
+        model = User
+        fields = ('new_password', 'new_password2')
+
+    def validate(self, data):
+        if data['new_password'] != data['new_password2']:
+            raise serializers.ValidationError("Passwords don't match.")
+
+        return data
 
 
 class MyTokenObtainPairSerializer(TokenObtainPairSerializer):

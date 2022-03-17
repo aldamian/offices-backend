@@ -12,14 +12,19 @@ from django.forms.models import model_to_dict
 
 # Display Offices
 class OfficeList(viewsets.ViewSet):
-    # prod - change permission_classes to [UserAdminPermission]
-    permission_classes = [AllowAny]
+    permission_classes = [UserAdminPermission, UserOfficeAdminPermission]
     queryset = Office.objects.all()
     serializer_class = OfficeSerializer
 
     def list(self, request):
         offices = Office.objects.all()
         serializer = OfficeSerializer(offices, many=True)
+        return Response(serializer.data)
+
+    
+    def retrieve(self, request, pk=None):
+        office = get_object_or_404(Office, pk=pk)
+        serializer = OfficeSerializer(office)
         return Response(serializer.data)
 
     # create a new office
