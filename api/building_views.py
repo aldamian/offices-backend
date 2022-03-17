@@ -32,7 +32,8 @@ class BuildingList(viewsets.ViewSet):
                 img_url=serializer.validated_data['img_url'],
             )
             building.save()
-            return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
+            # building added succesfully
+            return Response({"Success": "Building added succesfully."}, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # update a building
