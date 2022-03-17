@@ -1,3 +1,4 @@
+from .views import ChangePasswordView
 from .user_views import Me, UserList, UserDetail
 from .building_views import BuildingList#, BuildingDetail
 from .office_views import OfficeList#, OfficeDetail
@@ -11,11 +12,13 @@ app_name = 'api'
 
 router = DefaultRouter()
 router.register('me', Me, basename='me')
+router.register('change_password', ChangePasswordView, basename='change_password')
 router.register('users', UserList, basename='post')
 router.register('users', UserDetail, basename='update')
 router.register('buildings', BuildingList, basename='post')
 router.register('offices', OfficeList, basename='post')
 router.register('desks', DeskList, basename='post')
 router.register('requests', RequestList, basename='post')
+
 
 urlpatterns = router.urls

@@ -1,4 +1,4 @@
-from .models import Building
+from .models import Building, Office
 from .serializers import BuildingSerializer
 from .permissions import UserAuthenticatedPermission, UserAdminPermission, UserOfficeAdminPermission
 from rest_framework import status, viewsets
@@ -12,8 +12,7 @@ from django.forms.models import model_to_dict
 
 # Display Buildings
 class BuildingList(viewsets.ViewSet):
-    # prod - change permission_classes to [UserAdminPermission]
-    permission_classes = [AllowAny]
+    permission_classes = [UserAdminPermission, UserOfficeAdminPermission]
     queryset = Building.objects.all()
     serializer_class = BuildingSerializer
 
@@ -25,7 +24,6 @@ class BuildingList(viewsets.ViewSet):
     # create a new building
     def create(self, request):
         serializer = BuildingSerializer(data=request.data)
-        # perform validation checks
         if serializer.is_valid():
             building = Building.objects.create(
                 name=serializer.validated_data['name'],
@@ -34,7 +32,7 @@ class BuildingList(viewsets.ViewSet):
                 img_url=serializer.validated_data['img_url'],
             )
             building.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
+            return Response(serializer.validated_data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     # update a building
@@ -50,5 +48,11 @@ class BuildingList(viewsets.ViewSet):
     # to-do: can delete only if offices are empty
     def destroy(self, request, pk=None):
         building = get_object_or_404(Building, pk=pk)
-        building.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        # can only delete building if offices are empty
+        get_offices = Office.objects.filter(building_id=building.id)
+        if get_offices:
+            # can't delete buildings with offices
+            return Response(status=status.HTTP_400_BAD_REQUEST)
+        else:
+            building.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
