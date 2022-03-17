@@ -24,8 +24,14 @@ class OfficeList(viewsets.ViewSet):
     
     def retrieve(self, request, pk=None):
         office = get_object_or_404(Office, pk=pk)
+        office_serialized = OfficeGetSerializer(office)
+        # get all desks in the office from 
+        #desks = Desk.objects.filter(office_id=office.id)
+
+        office = get_object_or_404(Office, pk=pk)
         desks = Desk.objects.filter(office_id=pk)
         # get user name by user_id
+        user_name = User.objects.get(id=office.office_admin).username
 
         users = User.objects.filter(user_id=pk)
         serializer_office = OfficeSerializer(office)
