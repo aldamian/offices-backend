@@ -1,5 +1,5 @@
 from .models import Building, Office
-from .serializers import BuildingSerializer
+from .serializers import BuildingSerializer, BuildingGetSerializer
 from .permissions import UserAuthenticatedPermission, UserAdminPermission, UserOfficeAdminPermission
 from rest_framework import status, viewsets
 from rest_framework.response import Response
@@ -16,7 +16,7 @@ class BuildingList(viewsets.ViewSet):
 
     def list(self, request):
         buildings = Building.objects.all()
-        serializer = BuildingSerializer(buildings, many=True)
+        serializer = BuildingGetSerializer(buildings, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):

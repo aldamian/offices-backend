@@ -1,5 +1,5 @@
-from .models import Office
-from .serializers import OfficeSerializer
+from .models import User, Office, Desk
+from .serializers import OfficeSerializer, OfficeGetSerializer, DeskGetSerializer
 from .permissions import UserAuthenticatedPermission, UserAdminPermission, UserOfficeAdminPermission
 from rest_framework import status, viewsets
 from rest_framework.response import Response
@@ -18,13 +18,24 @@ class OfficeList(viewsets.ViewSet):
 
     def list(self, request):
         offices = Office.objects.all()
-        serializer = OfficeSerializer(offices, many=True)
+        serializer = OfficeGetSerializer(offices, many=True)
         return Response(serializer.data)
 
     
     def retrieve(self, request, pk=None):
         office = get_object_or_404(Office, pk=pk)
-        serializer = OfficeSerializer(office)
+        desks = Desk.objects.filter(office_id=pk)
+        # get user name by user_id
+
+        users = User.objects.filter(user_id=pk)
+        serializer_office = OfficeSerializer(office)
+        serializer_desks = DeskGetSerializer(desks, many=True)
+        result = {}
+        temp_result={}
+        temp_result.update()
+        result.update(serializer_office.data)
+        
+
         return Response(serializer.data)
 
     # create a new office

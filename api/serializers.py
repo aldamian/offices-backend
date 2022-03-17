@@ -37,6 +37,12 @@ class BuildingSerializer(serializers.ModelSerializer):
         fields = ('name', 'address', 'floors_count', 'img_url')
 
 
+class BuildingGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Building
+        fields = ('id', 'name', 'address', 'floors_count', 'img_url')
+
+
 class OfficeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Office
@@ -44,10 +50,24 @@ class OfficeSerializer(serializers.ModelSerializer):
                   'x_size_m', 'y_size_m', 'desk_ids', 'office_admin')
 
 
+class OfficeGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Office
+        fields = ('id', 'name', 'building_id', 'floor_number', 'total_desks', 'usable_desks', 
+                  'x_size_m', 'y_size_m', 'desk_ids', 'office_admin')
+
+
 class DeskSerializer(serializers.ModelSerializer):
     class Meta:
         model = Desk
         fields = ('office_id', 'desk_number', 'user_id', 'is_usable',
+                  'x_size_m', 'y_size_m', 'x_pos_px', 'y_pos_px')
+
+
+class DeskGetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Desk
+        fields = ('id', 'office_id', 'desk_number', 'user_id', 'is_usable',
                   'x_size_m', 'y_size_m', 'x_pos_px', 'y_pos_px')
 
 
