@@ -49,7 +49,7 @@ class OfficeList(viewsets.ViewSet):
                 usable_desks=serializer.validated_data['usable_desks'],
                 x_size_m=serializer.validated_data['x_size_m'],
                 y_size_m=serializer.validated_data['y_size_m'],
-                desk_ids=serializer.validated_data['desk_ids'],
+                # desk_ids=serializer.validated_data['desk_ids'],
                 office_admin=serializer.validated_data['office_admin'],
             )
             office.save()
