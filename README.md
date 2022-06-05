@@ -5,3 +5,7 @@ RESTful API implemented using Django Rest Framework. It acts as the backend for 
 # Live 
 
 https://offices-backend.herokuapp.com/api/
+
+## More
+
+![alt text](database.png)
