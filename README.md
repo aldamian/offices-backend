@@ -1,7 +1,8 @@
 # About
 
 RESTful API implemented using Django Rest Framework. It acts as the backend for an office automation web app.  
-Contact me for login credentials.
+Frontend needs to be refreshed after loading the first time.  
+Contact me for login credentials.  
 
 # Live 
 
