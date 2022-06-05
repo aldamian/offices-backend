@@ -8,7 +8,7 @@ https://offices-backend.herokuapp.com/api/
 
 ## Architecture
 
-![alt text](architecture.png)
+![alt text](architecture.drawio)
 
 ## Database Schema
 
