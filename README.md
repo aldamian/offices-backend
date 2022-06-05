@@ -1,6 +1,6 @@
 # About
 
-RESTful API implemented using Django Rest Framework. It acts as the backend for an office automation web app.
+RESTful API implemented using Django Rest Framework. It acts as the backend for an office automation web app.  
 Contact me for login credentials.
 
 # Live 
