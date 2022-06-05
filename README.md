@@ -9,6 +9,10 @@ Contact me for login credentials.
 https://offices-frontend.herokuapp.com/login  
 https://offices-backend.herokuapp.com/api/
 
+# API documentation
+
+https://offices-backend.herokuapp.com/swagger/
+
 # Database Schema
 
 ![alt text](database_schema.png)
