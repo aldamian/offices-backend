@@ -6,10 +6,8 @@ RESTful API implemented using Django Rest Framework. It acts as the backend for 
 
 https://offices-backend.herokuapp.com/api/
 
-## Architecture
+# Database Schema
 
-![alt text](architecture.drawio)
-
-## Database Schema
+![alt text](database_schema.png)
 
 ![alt text](database.png)
