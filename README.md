@@ -1,6 +1,6 @@
 # About
 
-RESTful API implemented using Django Rest Framework. 
+RESTful API implemented using Django Rest Framework.  
 It acts as the backend for an office automation web app.  
 
 # Database Schema
